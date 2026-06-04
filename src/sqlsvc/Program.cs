@@ -29,7 +29,7 @@ switch (cmd)
         return 0;
 
     default:
-        Console.Error.WriteLine($"Unknown command: {args[0]}");
+        await Console.Error.WriteLineAsync($"Unknown command: {args[0]}");
         PrintUsage();
         return 1;
 }
