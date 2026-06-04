@@ -55,6 +55,43 @@ public class CommandParsingTests
     }
 
     [Fact]
+    public void StartCommand_MultipleServiceNames_ParsesAll()
+    {
+        // Should not throw; will fail at ServiceController but parsing succeeds
+        var result = StartCommand.Execute(["Svc1", "Svc2", "Svc3"]);
+        Assert.Equal(1, result);
+    }
+
+    [Fact]
+    public void StopCommand_MultipleServiceNames_ParsesAll()
+    {
+        var result = StopCommand.Execute(["Svc1", "Svc2", "--timeout", "15"]);
+        Assert.Equal(1, result);
+    }
+
+    [Fact]
+    public void ListCommand_EmptyArgs_ReturnsOk()
+    {
+        // No SQL services on CI → returns 0 with warning
+        var result = ListCommand.Execute([]);
+        Assert.Equal(0, result);
+    }
+
+    [Fact]
+    public void ListCommand_SpecificService_NonExistent_ReturnsError()
+    {
+        var result = ListCommand.Execute(["NonexistentService"]);
+        Assert.Equal(1, result);
+    }
+
+    [Fact]
+    public void ListCommand_WithJsonFlag_StillParses()
+    {
+        var result = ListCommand.Execute(["--json"]);
+        Assert.Equal(0, result);
+    }
+
+    [Fact]
     public void ParseFormat_Default_ReturnsTable()
     {
         var result = OutputFormatter.ParseFormat([]);

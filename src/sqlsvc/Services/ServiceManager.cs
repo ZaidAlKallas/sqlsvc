@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Security.Principal;
 using System.ServiceProcess;
+using sqlsvc.Helpers;
 
 namespace sqlsvc.Services;
 
@@ -19,7 +20,7 @@ internal static class ServiceManager
     {
         if (!IsAdministrator())
         {
-            Console.Error.WriteLine("Warning: Not running as administrator. This command may fail.");
+            ConsoleEx.WriteWarningLine("Warning: Not running as administrator. This command may fail.");
         }
     }
 
@@ -41,28 +42,28 @@ internal static class ServiceManager
     {
         if (sc.Status == ServiceControllerStatus.Running)
         {
-            Console.WriteLine($"Service '{sc.ServiceName}' is already running.");
+            ConsoleEx.WriteWarningLine($"Service '{sc.ServiceName}' is already running.");
             return;
         }
 
         Console.Write($"Starting '{sc.ServiceName}'... ");
         sc.Start();
         sc.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(timeoutSeconds));
-        Console.WriteLine("Started.");
+        ConsoleEx.WriteSuccessLine("Started.");
     }
 
     public static void Stop(ServiceController sc, int timeoutSeconds)
     {
         if (sc.Status == ServiceControllerStatus.Stopped)
         {
-            Console.WriteLine($"Service '{sc.ServiceName}' is already stopped.");
+            ConsoleEx.WriteWarningLine($"Service '{sc.ServiceName}' is already stopped.");
             return;
         }
 
         Console.Write($"Stopping '{sc.ServiceName}'... ");
         sc.Stop();
         sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(timeoutSeconds));
-        Console.WriteLine("Stopped.");
+        ConsoleEx.WriteSuccessLine("Stopped.");
     }
 
     public static void ChangeStartupType(ServiceController sc, string startupType)
@@ -89,13 +90,16 @@ internal static class ServiceManager
 
         if (process is null)
         {
-            Console.Error.WriteLine("Failed to start sc.exe.");
+            ConsoleEx.WriteErrorLine("Failed to start sc.exe.");
             return;
         }
 
         process.WaitForExit(30000);
 
-        Console.WriteLine(process.ExitCode == 0 ? "Done." : "Failed.");
+        if (process.ExitCode == 0)
+            ConsoleEx.WriteSuccessLine("Done.");
+        else
+            ConsoleEx.WriteErrorLine("Failed.");
     }
 }
 

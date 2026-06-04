@@ -7,14 +7,17 @@ switch (cmd)
     case "list":
         return ListCommand.Execute(args[1..]);
 
-    case "status":
-        return StatusCommand.Execute(args[1..]);
-
     case "start":
         return StartCommand.Execute(args[1..]);
 
     case "stop":
         return StopCommand.Execute(args[1..]);
+
+    case "start-all":
+        return StartAllCommand.Execute(args[1..]);
+
+    case "stop-all":
+        return StopAllCommand.Execute(args[1..]);
 
     case "startup":
         return StartupCommand.Execute(args[1..]);
@@ -40,10 +43,11 @@ static void PrintUsage()
         Usage: sqlsvc <command> [options]
 
         Commands:
-          list              List all SQL Server services
-          status [service]  Show service status
-          start <service>   Start a service
-          stop <service>    Stop a service
+          list [service]               List all or a specific SQL Server service
+          start <service> [<service>]  Start one or more services
+          stop <service> [<service>]   Stop one or more services
+          start-all                    Start all SQL Server services
+          stop-all                     Stop all SQL Server services
           startup <service> <auto|manual|disabled>  Set startup type
 
         Global options:

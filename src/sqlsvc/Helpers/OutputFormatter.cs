@@ -59,14 +59,34 @@ internal static class OutputFormatter
 
         foreach (var svc in services)
         {
-            Console.WriteLine(
-                $"| {svc.ServiceName.PadRight(nameWidth - 1)}" +
-                $"| {svc.DisplayName.PadRight(displayWidth - 1)}" +
-                $"| {svc.Status.PadRight(statusWidth - 1)}" +
-                $"| {svc.StartupType.PadRight(startupWidth - 1)}|");
+            Console.Write($"| {svc.ServiceName.PadRight(nameWidth - 1)}");
+            Console.Write($"| {svc.DisplayName.PadRight(displayWidth - 1)}");
+            Console.Write("| ");
+
+            var statusColor = GetStatusColor(svc.Status);
+            var statusPadded = svc.Status.PadRight(statusWidth - 1);
+
+            if (statusColor.HasValue)
+                ConsoleEx.WriteColored(statusPadded, statusColor.Value);
+            else
+                Console.Write(statusPadded);
+
+            Console.Write($"| {svc.StartupType.PadRight(startupWidth - 1)}|");
+            Console.WriteLine();
         }
 
         Console.WriteLine(line);
+    }
+
+    private static ConsoleColor? GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "Running" => ConsoleColor.Green,
+            "Stopped" => ConsoleColor.Yellow,
+            "Disabled" => ConsoleColor.Red,
+            _ => null,
+        };
     }
 
     public static void PrintJson(List<SqlServiceInfo> services)

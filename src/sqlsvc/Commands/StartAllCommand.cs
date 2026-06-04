@@ -4,39 +4,32 @@ using sqlsvc.Services;
 
 namespace sqlsvc.Commands;
 
-internal static class StartCommand
+internal static class StartAllCommand
 {
     public static int Execute(string[] args)
     {
-        var (timeout, serviceNames) = ParseArgs(args);
+        var timeout = ParseTimeout(args);
+        var services = ServiceDiscovery.GetSqlServices();
 
-        if (serviceNames.Count == 0)
+        if (services.Count == 0)
         {
-            ConsoleEx.WriteErrorLine("Usage: sqlsvc start <service> [<service>...]");
-            return 1;
+            ConsoleEx.WriteWarningLine("No SQL Server services found.");
+            return 0;
         }
 
         ServiceManager.WarnIfNotAdministrator();
         var hasError = false;
 
-        foreach (var name in serviceNames)
+        foreach (var svc in services)
         {
             try
             {
-                using var sc = ServiceManager.GetService(name);
-
-                if (!ServiceDiscovery.IsSqlServerService(sc.ServiceName))
-                {
-                    ConsoleEx.WriteErrorLine($"'{name}' is not a SQL Server service.");
-                    hasError = true;
-                    continue;
-                }
-
+                using var sc = ServiceManager.GetService(svc.ServiceName);
                 ServiceManager.Start(sc, timeout);
             }
             catch (ServiceNotFoundException)
             {
-                ConsoleEx.WriteErrorLine($"Service '{name}' was not found.");
+                ConsoleEx.WriteErrorLine($"Service '{svc.ServiceName}' was not found.");
                 hasError = true;
             }
             catch (Win32Exception)
@@ -54,27 +47,17 @@ internal static class StartCommand
         return hasError ? 1 : 0;
     }
 
-    private static (int timeout, List<string> services) ParseArgs(string[] args)
+    private static int ParseTimeout(string[] args)
     {
-        var timeout = ServiceManager.DefaultTimeoutSeconds;
-        var services = new List<string>();
-
         for (var i = 0; i < args.Length; i++)
         {
             if (string.Equals(args[i], "--timeout", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
             {
                 if (int.TryParse(args[i + 1], out var seconds) && seconds > 0)
-                {
-                    timeout = seconds;
-                    i++;
-                }
-            }
-            else if (!args[i].StartsWith("--"))
-            {
-                services.Add(args[i]);
+                    return seconds;
             }
         }
 
-        return (timeout, services);
+        return ServiceManager.DefaultTimeoutSeconds;
     }
 }
