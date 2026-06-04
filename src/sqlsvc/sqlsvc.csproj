@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NoWarn>CA1416</NoWarn>
+
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>sqlsvc</ToolCommandName>
+    <PackageId>sqlsvc</PackageId>
+    <Version>0.1.0</Version>
+    <Title>sqlsvc</Title>
+    <Description>CLI tool to manage local SQL Server services on Windows.</Description>
+    <Authors>sqlsvc</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.8" />
+  </ItemGroup>
+
+</Project>
