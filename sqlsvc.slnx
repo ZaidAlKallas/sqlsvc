@@ -2,4 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/sqlsvc/sqlsvc.csproj" />
   </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/sqlsvc.Tests/sqlsvc.Tests.csproj" />
+  </Folder>
 </Solution>
