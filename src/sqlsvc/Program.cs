@@ -7,6 +7,9 @@ switch (cmd)
     case "list":
         return ListCommand.Execute(args[1..]);
 
+    case "status":
+        return StatusCommand.Execute(args[1..]);
+
     case "--help" or "-h" or "":
         PrintUsage();
         return 0;
