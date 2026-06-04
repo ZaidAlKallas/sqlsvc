@@ -36,9 +36,7 @@ internal static class StartAllCommand
                         continue;
                     }
 
-                    ServiceManager.ChangeStartupType(sc, "manual");
-
-                    if (sc.StartType == ServiceStartMode.Disabled)
+                    if (!ServiceManager.TryChangeStartupType(sc, "manual"))
                     {
                         ConsoleEx.WriteErrorLine($"Failed to enable service '{svc.ServiceName}'.");
                         hasError = true;

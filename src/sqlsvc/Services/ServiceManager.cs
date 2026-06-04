@@ -66,7 +66,7 @@ internal static class ServiceManager
         ConsoleEx.WriteSuccessLine("Stopped.");
     }
 
-    public static void ChangeStartupType(ServiceController sc, string startupType)
+    public static bool TryChangeStartupType(ServiceController sc, string startupType)
     {
         var scArg = startupType.ToLowerInvariant() switch
         {
@@ -91,15 +91,24 @@ internal static class ServiceManager
         if (process is null)
         {
             ConsoleEx.WriteErrorLine("Failed to start sc.exe.");
-            return;
+            return false;
         }
 
         process.WaitForExit(30000);
 
         if (process.ExitCode == 0)
+        {
             ConsoleEx.WriteSuccessLine("Done.");
-        else
-            ConsoleEx.WriteErrorLine("Failed.");
+            return true;
+        }
+
+        ConsoleEx.WriteErrorLine("Failed.");
+        return false;
+    }
+
+    public static void ChangeStartupType(ServiceController sc, string startupType)
+    {
+        TryChangeStartupType(sc, startupType);
     }
 }
 
