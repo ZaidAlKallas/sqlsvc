@@ -27,6 +27,7 @@ internal static class StartCommand
                 return 1;
             }
 
+            ServiceManager.WarnIfNotAdministrator();
             ServiceManager.Start(sc, timeout);
             return 0;
         }

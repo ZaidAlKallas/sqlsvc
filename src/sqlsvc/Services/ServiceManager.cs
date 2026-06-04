@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Principal;
 using System.ServiceProcess;
 
 namespace sqlsvc.Services;
@@ -6,6 +7,21 @@ namespace sqlsvc.Services;
 internal static class ServiceManager
 {
     public const int DefaultTimeoutSeconds = 30;
+
+    public static bool IsAdministrator()
+    {
+        using var identity = WindowsIdentity.GetCurrent();
+        var principal = new WindowsPrincipal(identity);
+        return principal.IsInRole(WindowsBuiltInRole.Administrator);
+    }
+
+    public static void WarnIfNotAdministrator()
+    {
+        if (!IsAdministrator())
+        {
+            Console.Error.WriteLine("Warning: Not running as administrator. This command may fail.");
+        }
+    }
 
     public static ServiceController GetService(string name)
     {

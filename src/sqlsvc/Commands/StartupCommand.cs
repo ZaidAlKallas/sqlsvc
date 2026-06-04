@@ -32,6 +32,7 @@ internal static class StartupCommand
                 return 1;
             }
 
+            ServiceManager.WarnIfNotAdministrator();
             ServiceManager.ChangeStartupType(sc, startupType);
             return 0;
         }

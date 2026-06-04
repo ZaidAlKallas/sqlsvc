@@ -26,6 +26,7 @@ internal static class StopCommand
                 return 1;
             }
 
+            ServiceManager.WarnIfNotAdministrator();
             ServiceManager.Stop(sc, timeout);
             return 0;
         }
