@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.ServiceProcess;
 using sqlsvc.Helpers;
 using sqlsvc.Services;
 
@@ -8,11 +9,11 @@ internal static class StartCommand
 {
     public static int Execute(string[] args)
     {
-        var (timeout, serviceNames) = ParseArgs(args);
+        var (timeout, enable, serviceNames) = ParseArgs(args);
 
         if (serviceNames.Count == 0)
         {
-            ConsoleEx.WriteErrorLine("Usage: sqlsvc start <service> [<service>...]");
+            ConsoleEx.WriteErrorLine("Usage: sqlsvc start <service> [<service>...] [--enable]");
             return 1;
         }
 
@@ -32,6 +33,25 @@ internal static class StartCommand
                     continue;
                 }
 
+                if (sc.StartType == ServiceStartMode.Disabled)
+                {
+                    if (!enable)
+                    {
+                        ConsoleEx.WriteErrorLine($"Service '{name}' is disabled. Use --enable to automatically enable it before starting.");
+                        hasError = true;
+                        continue;
+                    }
+
+                    ServiceManager.ChangeStartupType(sc, "manual");
+
+                    if (sc.StartType == ServiceStartMode.Disabled)
+                    {
+                        ConsoleEx.WriteErrorLine($"Failed to enable service '{name}'.");
+                        hasError = true;
+                        continue;
+                    }
+                }
+
                 ServiceManager.Start(sc, timeout);
             }
             catch (ServiceNotFoundException)
@@ -44,7 +64,7 @@ internal static class StartCommand
                 ConsoleEx.WriteErrorLine("Access denied. Run as administrator.");
                 return 1;
             }
-            catch (TimeoutException)
+            catch (System.TimeoutException)
             {
                 ConsoleEx.WriteErrorLine($"Operation timed out after {timeout} seconds.");
                 hasError = true;
@@ -54,9 +74,10 @@ internal static class StartCommand
         return hasError ? 1 : 0;
     }
 
-    private static (int timeout, List<string> services) ParseArgs(string[] args)
+    private static (int timeout, bool enable, List<string> services) ParseArgs(string[] args)
     {
         var timeout = ServiceManager.DefaultTimeoutSeconds;
+        var enable = false;
         var services = new List<string>();
 
         for (var i = 0; i < args.Length; i++)
@@ -69,12 +90,16 @@ internal static class StartCommand
                     i++;
                 }
             }
+            else if (string.Equals(args[i], "--enable", StringComparison.OrdinalIgnoreCase))
+            {
+                enable = true;
+            }
             else if (!args[i].StartsWith("--"))
             {
                 services.Add(args[i]);
             }
         }
 
-        return (timeout, services);
+        return (timeout, enable, services);
     }
 }

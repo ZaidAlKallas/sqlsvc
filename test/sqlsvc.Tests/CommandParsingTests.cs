@@ -55,6 +55,34 @@ public class CommandParsingTests
     }
 
     [Fact]
+    public void StartupCommand_NewSyntax_TypeWithService_ReturnsError()
+    {
+        var result = StartupCommand.Execute(["manual", "NonexistentService"]);
+        Assert.Equal(1, result); // service not found
+    }
+
+    [Fact]
+    public void StartupCommand_NoServiceOrAll_ReturnsError()
+    {
+        var result = StartupCommand.Execute(["manual"]);
+        Assert.Equal(1, result);
+    }
+
+    [Fact]
+    public void StartupCommand_AllAndServiceNames_ReturnsError()
+    {
+        var result = StartupCommand.Execute(["manual", "MSSQLSERVER", "--all"]);
+        Assert.Equal(1, result);
+    }
+
+    [Fact]
+    public void StartCommand_WithEnableFlag_ReturnsErrorForMissingService()
+    {
+        var result = StartCommand.Execute(["NonexistentService", "--enable"]);
+        Assert.Equal(1, result);
+    }
+
+    [Fact]
     public void StartCommand_MultipleServiceNames_ParsesAll()
     {
         // Should not throw; will fail at ServiceController but parsing succeeds

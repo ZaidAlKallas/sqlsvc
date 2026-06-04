@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using sqlsvc.Helpers;
 using sqlsvc.Services;
 
 namespace sqlsvc.Commands;
@@ -7,49 +8,97 @@ internal static class StartupCommand
 {
     public static int Execute(string[] args)
     {
-        if (args.Length < 2)
+        if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: sqlsvc startup <service> <auto|manual|disabled>");
+            ConsoleEx.WriteErrorLine("Usage: sqlsvc startup <auto|manual|disabled> (<service> [<service>...] | --all)");
             return 1;
         }
 
-        var serviceName = args[0];
-        var startupType = args[1].ToLowerInvariant();
+        var startupType = args[0].ToLowerInvariant();
 
         if (startupType is not ("auto" or "automatic" or "manual" or "disabled"))
         {
-            Console.Error.WriteLine("Startup type must be auto, manual, or disabled.");
+            ConsoleEx.WriteErrorLine("Startup type must be auto, manual, or disabled.");
             return 1;
         }
 
-        try
+        var canonicalType = startupType switch
         {
-            using var sc = ServiceManager.GetService(serviceName);
+            "auto" or "automatic" => "auto",
+            "manual" => "manual",
+            "disabled" => "disabled",
+            _ => throw new InvalidOperationException("Unreachable")
+        };
 
-            if (!ServiceDiscovery.IsSqlServerService(sc.ServiceName))
+        var remaining = args[1..];
+        var hasAll = remaining.Any(a => string.Equals(a, "--all", StringComparison.OrdinalIgnoreCase));
+        var serviceNames = remaining.Where(a => !a.StartsWith("--")).ToList();
+
+        if (hasAll && serviceNames.Count > 0)
+        {
+            ConsoleEx.WriteErrorLine("Cannot use --all with specific service names.");
+            return 1;
+        }
+
+        List<string> targets;
+
+        if (hasAll)
+        {
+            var all = ServiceDiscovery.GetSqlServices();
+
+            if (all.Count == 0)
             {
-                Console.Error.WriteLine($"'{serviceName}' is not a SQL Server service.");
-                return 1;
+                ConsoleEx.WriteWarningLine("No SQL Server services found.");
+                return 0;
             }
 
-            ServiceManager.WarnIfNotAdministrator();
-            ServiceManager.ChangeStartupType(sc, startupType);
-            return 0;
+            targets = all.Select(s => s.ServiceName).ToList();
         }
-        catch (ServiceNotFoundException)
+        else if (serviceNames.Count > 0)
         {
-            Console.Error.WriteLine($"Service '{serviceName}' was not found.");
+            targets = serviceNames;
+        }
+        else
+        {
+            ConsoleEx.WriteErrorLine("Specify at least one service name or use --all.");
             return 1;
         }
-        catch (Win32Exception)
+
+        ServiceManager.WarnIfNotAdministrator();
+        var hasError = false;
+
+        foreach (var name in targets)
         {
-            Console.Error.WriteLine("Access denied. Run as administrator.");
-            return 1;
+            try
+            {
+                using var sc = ServiceManager.GetService(name);
+
+                if (!ServiceDiscovery.IsSqlServerService(sc.ServiceName))
+                {
+                    ConsoleEx.WriteErrorLine($"'{name}' is not a SQL Server service.");
+                    hasError = true;
+                    continue;
+                }
+
+                ServiceManager.ChangeStartupType(sc, canonicalType);
+            }
+            catch (ServiceNotFoundException)
+            {
+                ConsoleEx.WriteErrorLine($"Service '{name}' was not found.");
+                hasError = true;
+            }
+            catch (Win32Exception)
+            {
+                ConsoleEx.WriteErrorLine("Access denied. Run as administrator.");
+                return 1;
+            }
+            catch (ArgumentException ex)
+            {
+                ConsoleEx.WriteErrorLine(ex.Message);
+                hasError = true;
+            }
         }
-        catch (ArgumentException ex)
-        {
-            Console.Error.WriteLine(ex.Message);
-            return 1;
-        }
+
+        return hasError ? 1 : 0;
     }
 }

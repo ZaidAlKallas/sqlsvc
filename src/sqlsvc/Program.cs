@@ -43,12 +43,17 @@ static void PrintUsage()
         Usage: sqlsvc <command> [options]
 
         Commands:
-          list [service]               List all or a specific SQL Server service
-          start <service> [<service>]  Start one or more services
-          stop <service> [<service>]   Stop one or more services
-          start-all                    Start all SQL Server services
-          stop-all                     Stop all SQL Server services
-          startup <service> <auto|manual|disabled>  Set startup type
+          list [service]                        List all or a specific SQL Server service
+          start <service> [<service>...]        Start one or more services
+          stop  <service> [<service>...]        Stop one or more services
+          start-all                             Start all SQL Server services
+          stop-all                              Stop all SQL Server services
+          startup <auto|manual|disabled>        Set startup type
+                 (<service> [<service>...] | --all)
+
+        Command options:
+          --enable         Automatically enable disabled services before starting (start, start-all)
+          --timeout <sec>  Operation timeout in seconds (default: 30)
 
         Global options:
           --json            Output in JSON format

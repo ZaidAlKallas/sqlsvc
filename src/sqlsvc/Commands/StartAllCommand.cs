@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.ServiceProcess;
 using sqlsvc.Helpers;
 using sqlsvc.Services;
 
@@ -8,7 +9,7 @@ internal static class StartAllCommand
 {
     public static int Execute(string[] args)
     {
-        var timeout = ParseTimeout(args);
+        var (timeout, enable) = ParseArgs(args);
         var services = ServiceDiscovery.GetSqlServices();
 
         if (services.Count == 0)
@@ -25,6 +26,26 @@ internal static class StartAllCommand
             try
             {
                 using var sc = ServiceManager.GetService(svc.ServiceName);
+
+                if (sc.StartType == ServiceStartMode.Disabled)
+                {
+                    if (!enable)
+                    {
+                        ConsoleEx.WriteErrorLine($"Service '{svc.ServiceName}' is disabled. Use --enable to automatically enable it before starting.");
+                        hasError = true;
+                        continue;
+                    }
+
+                    ServiceManager.ChangeStartupType(sc, "manual");
+
+                    if (sc.StartType == ServiceStartMode.Disabled)
+                    {
+                        ConsoleEx.WriteErrorLine($"Failed to enable service '{svc.ServiceName}'.");
+                        hasError = true;
+                        continue;
+                    }
+                }
+
                 ServiceManager.Start(sc, timeout);
             }
             catch (ServiceNotFoundException)
@@ -37,7 +58,7 @@ internal static class StartAllCommand
                 ConsoleEx.WriteErrorLine("Access denied. Run as administrator.");
                 return 1;
             }
-            catch (TimeoutException)
+            catch (System.TimeoutException)
             {
                 ConsoleEx.WriteErrorLine($"Operation timed out after {timeout} seconds.");
                 hasError = true;
@@ -47,17 +68,27 @@ internal static class StartAllCommand
         return hasError ? 1 : 0;
     }
 
-    private static int ParseTimeout(string[] args)
+    private static (int timeout, bool enable) ParseArgs(string[] args)
     {
+        var timeout = ServiceManager.DefaultTimeoutSeconds;
+        var enable = false;
+
         for (var i = 0; i < args.Length; i++)
         {
             if (string.Equals(args[i], "--timeout", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
             {
                 if (int.TryParse(args[i + 1], out var seconds) && seconds > 0)
-                    return seconds;
+                {
+                    timeout = seconds;
+                    i++;
+                }
+            }
+            else if (string.Equals(args[i], "--enable", StringComparison.OrdinalIgnoreCase))
+            {
+                enable = true;
             }
         }
 
-        return ServiceManager.DefaultTimeoutSeconds;
+        return (timeout, enable);
     }
 }
