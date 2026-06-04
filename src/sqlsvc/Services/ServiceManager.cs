@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.ServiceProcess;
 
 namespace sqlsvc.Services;
@@ -46,6 +47,39 @@ internal static class ServiceManager
         sc.Stop();
         sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(timeoutSeconds));
         Console.WriteLine("Stopped.");
+    }
+
+    public static void ChangeStartupType(ServiceController sc, string startupType)
+    {
+        var scArg = startupType.ToLowerInvariant() switch
+        {
+            "auto" => "auto",
+            "automatic" => "auto",
+            "manual" => "demand",
+            "disabled" => "disabled",
+            _ => throw new ArgumentException($"Invalid startup type: '{startupType}'. Use auto, manual, or disabled.")
+        };
+
+        Console.Write($"Setting startup type of '{sc.ServiceName}' to {startupType}... ");
+
+        var psi = new ProcessStartInfo("sc", $"config \"{sc.ServiceName}\" start={scArg}")
+        {
+            Verb = "runas",
+            UseShellExecute = true,
+            CreateNoWindow = true,
+        };
+
+        using var process = Process.Start(psi);
+
+        if (process is null)
+        {
+            Console.Error.WriteLine("Failed to start sc.exe.");
+            return;
+        }
+
+        process.WaitForExit(30000);
+
+        Console.WriteLine(process.ExitCode == 0 ? "Done." : "Failed.");
     }
 }
 

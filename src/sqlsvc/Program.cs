@@ -16,6 +16,9 @@ switch (cmd)
     case "stop":
         return StopCommand.Execute(args[1..]);
 
+    case "startup":
+        return StartupCommand.Execute(args[1..]);
+
     case "--help" or "-h" or "":
         PrintUsage();
         return 0;
