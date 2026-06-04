@@ -10,6 +10,12 @@ switch (cmd)
     case "status":
         return StatusCommand.Execute(args[1..]);
 
+    case "start":
+        return StartCommand.Execute(args[1..]);
+
+    case "stop":
+        return StopCommand.Execute(args[1..]);
+
     case "--help" or "-h" or "":
         PrintUsage();
         return 0;
