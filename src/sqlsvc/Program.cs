@@ -2,8 +2,7 @@
 
 var cmd = args.Length > 0 ? args[0].ToLowerInvariant() : "";
 
-switch (cmd)
-{
+switch (cmd) {
     case "list":
         return ListCommand.Execute(args[1..]);
 
@@ -22,6 +21,9 @@ switch (cmd)
     case "startup":
         return StartupCommand.Execute(args[1..]);
 
+    case "tui":
+        return TuiCommand.Execute();
+
     case "--help" or "-h" or "":
         PrintUsage();
         return 0;
@@ -37,8 +39,7 @@ switch (cmd)
         return 1;
 }
 
-static void PrintUsage()
-{
+static void PrintUsage() {
     Console.WriteLine("""
         Usage: sqlsvc <command> [options]
 
@@ -48,6 +49,7 @@ static void PrintUsage()
           stop  <service> [<service>...]        Stop one or more services
           start-all                             Start all SQL Server services
           stop-all                              Stop all SQL Server services
+          tui                                   Interactive console UI
           startup <auto|manual|disabled>        Set startup type
                  (<service> [<service>...] | --all)
 

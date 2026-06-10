@@ -10,7 +10,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>sqlsvc</ToolCommandName>
     <PackageId>sqlsvc</PackageId>
-    <Version>0.3.2</Version>
+    <Version>0.4.0</Version>
     <Title>sqlsvc</Title>
     <Description>CLI tool to manage local SQL Server services on Windows.</Description>
     <Authors>ZaidAlKallas</Authors>
@@ -19,6 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Spectre.Console" Version="0.56.0" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.8" />
   </ItemGroup>
 
