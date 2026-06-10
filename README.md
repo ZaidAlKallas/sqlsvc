@@ -30,6 +30,7 @@ sqlsvc <command> [options]
 | `start-all [--enable]` | Start all SQL Server services |
 | `stop-all` | Stop all SQL Server services |
 | `startup <auto\|manual\|disabled> (<service...> \| --all)` | Set startup type for one or all services |
+| `tui` | Interactive terminal UI (nano/vim-style) |
 
 ### Command Options
 
@@ -52,6 +53,41 @@ sqlsvc <command> [options]
 - Table, JSON, and CSV output (use `--json` or `--csv` with list commands)
 - Status values are color-coded in table output: **Running** (green), **Stopped** (yellow), **Disabled** (red)
 - Success, warning, and error messages use green, yellow, and red respectively
+
+### Interactive TUI
+
+The `tui` command opens a full-screen terminal interface (like nano or vim) for managing services:
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+┆ Service Name           Status          Startup                     ┆
+┆────────────────────────────────────────────────────────────────────┆
+┆ ▌ MSSQL$SQL2022        Running         Automatic                   ┆
+┆   MSSQLSERVER          Stopped         Manual                      ┆
+┆   SQLSERVERAGENT       Stopped         Disabled                    ┆
+┆   SQLBrowser           Stopped         Disabled                    ┆
+├────────────────────────────────────────────────────────────────────┤
+┆  [S]tart  [T]op  [A]uto  [M]anual  [D]isabled  [/]Filter  [Q]uit   ┆
+└────────────────────────────────────────────────────────────────────┘
+```
+
+**Keyboard shortcuts:**
+
+| Key | Action |
+|---|---|
+| `↑`/`↓` | Navigate services |
+| `PgUp`/`PgDn` | Scroll by page |
+| `Home`/`End` | Jump to first/last |
+| `S` | Start selected service (auto-enables if disabled) |
+| `T` | Stop selected service |
+| `A` | Set startup to Automatic |
+| `M` | Set startup to Manual |
+| `D` | Set startup to Disabled |
+| `R` | Refresh service list |
+| `F1` | Show help screen |
+| `/` | Filter services by name |
+| `Enter` | Show service details |
+| `Q` / `Esc` | Quit |
 
 ### Examples
 
@@ -100,32 +136,16 @@ sqlsvc startup auto --all
 
 # Use a custom timeout for long-running operations
 sqlsvc stop-all --timeout 60
+
+# Open interactive TUI
+sqlsvc tui
 ```
 
 ## Requirements
 
 - Windows 10/11
 - .NET 10 SDK or runtime
-- Administrator privileges for `start`, `stop`, `startup`, `start-all`, and `stop-all` commands
-
-## Building from Source
-
-```powershell
-dotnet build
-```
-
-## Testing
-
-```powershell
-dotnet test
-```
-
-## Packaging
-
-```powershell
-dotnet pack
-dotnet tool install --global --add-source ./nupkg sqlsvc
-```
+- Administrator privileges for `start`, `stop`, `startup`, `start-all`, `stop-all`, and TUI service actions
 
 ## License
 
