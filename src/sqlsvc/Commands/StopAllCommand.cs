@@ -21,13 +21,8 @@ internal static class StopAllCommand
         ServiceManager.WarnIfNotAdministrator();
         var hasError = false;
 
-        var controllers = BuildControllers(serviceNames.Select(s => s.ServiceName).ToList());
-
-        // Topological sort: services that others depend on come last in stop order
-        // Without this, ServiceController.Stop() throws InvalidOperationException
-        // when a dependent service (e.g. SQLSERVERAGENT) is still running.
-        var ordered = TopologicalSort(controllers);
-        ordered.Reverse(); // reverse start order → stop order (dependents first)
+        var controllers = ServiceManager.BuildControllers(serviceNames.Select(s => s.ServiceName));
+        var ordered = ServiceManager.OrderForStop(controllers);
 
         foreach (var sc in ordered)
         {
@@ -71,73 +66,5 @@ internal static class StopAllCommand
         }
 
         return ServiceManager.DefaultTimeoutSeconds;
-    }
-
-    private static Dictionary<string, ServiceController> BuildControllers(List<string> names)
-    {
-        var controllers = new Dictionary<string, ServiceController>(names.Count, StringComparer.OrdinalIgnoreCase);
-
-        foreach (var name in names)
-        {
-            try
-            {
-                var sc = new ServiceController(name);
-                _ = sc.Status;
-                controllers[name] = sc;
-            }
-            catch (InvalidOperationException)
-            {
-                ConsoleEx.WriteErrorLine($"Service '{name}' was not found. Skipping.");
-            }
-        }
-
-        return controllers;
-    }
-
-    private static List<ServiceController> TopologicalSort(Dictionary<string, ServiceController> controllers)
-    {
-        var adj = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-        var inDegree = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var name in controllers.Keys)
-        {
-            adj[name] = [];
-            inDegree[name] = 0;
-        }
-
-        foreach (var (name, sc) in controllers)
-        {
-            foreach (var dep in sc.ServicesDependedOn)
-            {
-                if (controllers.ContainsKey(dep.ServiceName))
-                {
-                    adj[dep.ServiceName].Add(name);
-                    inDegree[name]++;
-                }
-            }
-        }
-
-        var queue = new Queue<string>(inDegree.Where(kv => kv.Value == 0).Select(kv => kv.Key));
-        var sorted = new List<string>(controllers.Count);
-
-        while (queue.Count > 0)
-        {
-            var node = queue.Dequeue();
-            sorted.Add(node);
-
-            foreach (var neighbor in adj.GetValueOrDefault(node, []))
-            {
-                if (--inDegree[neighbor] == 0)
-                    queue.Enqueue(neighbor);
-            }
-        }
-
-        foreach (var (name, degree) in inDegree)
-        {
-            if (degree > 0)
-                sorted.Add(name);
-        }
-
-        return sorted.Select(n => controllers[n]).ToList();
     }
 }

@@ -21,34 +21,38 @@ internal static class StartAllCommand
         ServiceManager.WarnIfNotAdministrator();
         var hasError = false;
 
-        foreach (var svc in services)
+        var controllers = ServiceManager.BuildControllers(services.Select(s => s.ServiceName));
+        var ordered = ServiceManager.OrderForStart(controllers);
+
+        foreach (var sc in ordered)
         {
             try
             {
-                using var sc = ServiceManager.GetService(svc.ServiceName);
-
-                if (sc.StartType == ServiceStartMode.Disabled)
+                using (sc)
                 {
-                    if (!enable)
+                    if (sc.StartType == ServiceStartMode.Disabled)
                     {
-                        ConsoleEx.WriteErrorLine($"Service '{svc.ServiceName}' is disabled. Use --enable to automatically enable it before starting.");
-                        hasError = true;
-                        continue;
+                        if (!enable)
+                        {
+                            ConsoleEx.WriteErrorLine($"Service '{sc.ServiceName}' is disabled. Use --enable to automatically enable it before starting.");
+                            hasError = true;
+                            continue;
+                        }
+
+                        if (!ServiceManager.TryChangeStartupType(sc, "manual"))
+                        {
+                            ConsoleEx.WriteErrorLine($"Failed to enable service '{sc.ServiceName}'.");
+                            hasError = true;
+                            continue;
+                        }
                     }
 
-                    if (!ServiceManager.TryChangeStartupType(sc, "manual"))
-                    {
-                        ConsoleEx.WriteErrorLine($"Failed to enable service '{svc.ServiceName}'.");
-                        hasError = true;
-                        continue;
-                    }
+                    ServiceManager.Start(sc, timeout);
                 }
-
-                ServiceManager.Start(sc, timeout);
             }
             catch (ServiceNotFoundException)
             {
-                ConsoleEx.WriteErrorLine($"Service '{svc.ServiceName}' was not found.");
+                ConsoleEx.WriteErrorLine($"Service '{sc.ServiceName}' was not found.");
                 hasError = true;
             }
             catch (Win32Exception)

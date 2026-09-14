@@ -10,8 +10,9 @@ internal static class ListCommand
     public static int Execute(string[] args)
     {
         var format = OutputFormatter.ParseFormat(args);
+        var serviceName = args.FirstOrDefault(a => !a.StartsWith("--"));
 
-        if (args.Length == 0 || args[0].StartsWith("--"))
+        if (serviceName is null)
         {
             var services = ServiceDiscovery.GetSqlServices();
 
@@ -25,8 +26,6 @@ internal static class ListCommand
             return 0;
         }
 
-        var serviceName = args[0];
-
         try
         {
             using var sc = new ServiceController(serviceName);
@@ -37,29 +36,7 @@ internal static class ListCommand
                 return 1;
             }
 
-            var info = new SqlServiceInfo
-            {
-                ServiceName = sc.ServiceName,
-                DisplayName = sc.DisplayName,
-                Status = sc.Status switch
-                {
-                    ServiceControllerStatus.Running => "Running",
-                    ServiceControllerStatus.Stopped => "Stopped",
-                    ServiceControllerStatus.Paused => "Paused",
-                    ServiceControllerStatus.StartPending => "StartPending",
-                    ServiceControllerStatus.StopPending => "StopPending",
-                    _ => "Unknown"
-                },
-                StartupType = sc.StartType switch
-                {
-                    ServiceStartMode.Automatic => "Automatic",
-                    ServiceStartMode.Manual => "Manual",
-                    ServiceStartMode.Disabled => "Disabled",
-                    ServiceStartMode.Boot => "Boot",
-                    ServiceStartMode.System => "System",
-                    _ => "Unknown"
-                }
-            };
+            var info = SqlServiceInfo.FromController(sc);
 
             OutputFormatter.Print(new List<SqlServiceInfo> { info }, format);
             return 0;

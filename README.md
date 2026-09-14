@@ -27,7 +27,8 @@ sqlsvc <command> [options]
 | `list [service]` | List all or a specific SQL Server service |
 | `start <service...> [--enable]` | Start one or more services |
 | `stop <service...>` | Stop one or more services |
-| `start-all [--enable]` | Start all SQL Server services |
+| `restart <service...> [--enable]` | Restart one or more services |
+| `start-all [--enable]` | Start all SQL Server services (dependency-aware) |
 | `stop-all` | Stop all SQL Server services |
 | `startup <auto\|manual\|disabled> (<service...> \| --all)` | Set startup type for one or all services |
 | `tui` | Interactive terminal UI (nano/vim-style) |
@@ -36,7 +37,7 @@ sqlsvc <command> [options]
 
 | Option | Applies to | Description |
 |---|---|---|
-| `--enable` | `start`, `start-all` | Automatically enable disabled services before starting |
+| `--enable` | `start`, `restart`, `start-all` | Automatically enable disabled services before starting |
 | `--timeout <sec>` | `start`, `stop`, `start-all`, `stop-all` | Operation timeout in seconds (default: 30) |
 
 ### Global Options
@@ -80,10 +81,11 @@ The `tui` command opens a full-screen terminal interface (like nano or vim) for 
 | `Home`/`End` | Jump to first/last |
 | `S` | Start selected service (auto-enables if disabled) |
 | `T` | Stop selected service |
+| `R` | Restart selected service (auto-enables if disabled) |
 | `A` | Set startup to Automatic |
 | `M` | Set startup to Manual |
 | `D` | Set startup to Disabled |
-| `R` | Refresh service list |
+| `F5` | Refresh service list |
 | `F1` | Show help screen |
 | `/` | Filter services by name |
 | `Enter` | Show service details |
@@ -118,6 +120,12 @@ sqlsvc start-all --enable
 
 # Stop services (requires administrator)
 sqlsvc stop SQLSERVERAGENT MSSQLSERVER
+
+# Restart a service (requires administrator)
+sqlsvc restart MSSQLSERVER
+
+# Restart multiple services
+sqlsvc restart SQLSERVERAGENT MSSQLSERVER --enable
 
 # Stop all SQL Server services (dependency-aware)
 sqlsvc stop-all

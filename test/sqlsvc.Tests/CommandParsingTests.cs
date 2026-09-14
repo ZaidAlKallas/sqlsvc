@@ -98,6 +98,34 @@ public class CommandParsingTests
     }
 
     [Fact]
+    public void RestartCommand_EmptyArgs_ReturnsError()
+    {
+        var result = RestartCommand.Execute([]);
+        Assert.Equal(1, result);
+    }
+
+    [Fact]
+    public void RestartCommand_NoServiceName_ReturnsError()
+    {
+        var result = RestartCommand.Execute(["--timeout", "10"]);
+        Assert.Equal(1, result);
+    }
+
+    [Fact]
+    public void RestartCommand_MultipleServiceNames_ParsesAll()
+    {
+        var result = RestartCommand.Execute(["Svc1", "Svc2", "Svc3"]);
+        Assert.Equal(1, result);
+    }
+
+    [Fact]
+    public void RestartCommand_WithEnableFlag_ReturnsErrorForMissingService()
+    {
+        var result = RestartCommand.Execute(["NonexistentService", "--enable"]);
+        Assert.Equal(1, result);
+    }
+
+    [Fact]
     public void ListCommand_EmptyArgs_ReturnsOk()
     {
         // No SQL services on CI → returns 0 with warning
@@ -117,6 +145,20 @@ public class CommandParsingTests
     {
         var result = ListCommand.Execute(["--json"]);
         Assert.Equal(0, result);
+    }
+
+    [Fact]
+    public void ListCommand_JsonFlagBeforeServiceName_TargetsService()
+    {
+        var result = ListCommand.Execute(["--json", "NonexistentService"]);
+        Assert.Equal(1, result);
+    }
+
+    [Fact]
+    public void ListCommand_ServiceNameBeforeJsonFlag_TargetsService()
+    {
+        var result = ListCommand.Execute(["NonexistentService", "--json"]);
+        Assert.Equal(1, result);
     }
 
     [Fact]

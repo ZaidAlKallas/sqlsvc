@@ -19,6 +19,8 @@ public class FilterTests
     [InlineData("MsDtsServer150", true)]
     [InlineData("MsDtsServer160", true)]
     [InlineData("MSOLAP$SQL2022", true)]
+    [InlineData("SQLTELEMETRY", true)]
+    [InlineData("SQLTELEMETRY$SQL2022", true)]
     [InlineData("WSearch", false)]
     [InlineData("Dhcp", false)]
     [InlineData("SQLAnywhere", false)]

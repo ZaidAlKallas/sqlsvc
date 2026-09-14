@@ -12,6 +12,9 @@ switch (cmd) {
     case "stop":
         return StopCommand.Execute(args[1..]);
 
+    case "restart":
+        return RestartCommand.Execute(args[1..]);
+
     case "start-all":
         return StartAllCommand.Execute(args[1..]);
 
@@ -47,6 +50,7 @@ static void PrintUsage() {
           list [service]                        List all or a specific SQL Server service
           start <service> [<service>...]        Start one or more services
           stop  <service> [<service>...]        Stop one or more services
+          restart <service> [<service>...]      Restart one or more services
           start-all                             Start all SQL Server services
           stop-all                              Stop all SQL Server services
           tui                                   Interactive console UI
@@ -54,7 +58,7 @@ static void PrintUsage() {
                  (<service> [<service>...] | --all)
 
         Command options:
-          --enable         Automatically enable disabled services before starting (start, start-all)
+          --enable         Automatically enable disabled services before starting (start, restart, start-all)
           --timeout <sec>  Operation timeout in seconds (default: 30)
 
         Global options:

@@ -207,8 +207,17 @@ internal static class TuiCommand {
                                 state = state with { StatusMessage = msgD, StatusIsError = errD, NeedsRefresh = !errD };
                                 break;
 
-                            case ConsoleKey.R:
-                                state = state with { NeedsRefresh = true };
+                            case ConsoleKey.R when filtered.Count > 0:
+                                var (msgR, errR) = DoAction(filtered[state.SelectedIndex].ServiceName, sc => {
+                                    if (sc.StartType == ServiceStartMode.Disabled) {
+                                        if (!ServiceManager.TryChangeStartupType(sc, "manual"))
+                                            return ($"Failed to enable '{sc.ServiceName}'.", true);
+                                    }
+                                    ServiceManager.Stop(sc, ServiceManager.DefaultTimeoutSeconds);
+                                    ServiceManager.Start(sc, ServiceManager.DefaultTimeoutSeconds);
+                                    return ($"'{sc.ServiceName}' restarted.", false);
+                                });
+                                state = state with { StatusMessage = msgR, StatusIsError = errR, NeedsRefresh = !errR };
                                 break;
 
                             case ConsoleKey.Q:
@@ -354,7 +363,7 @@ internal static class TuiCommand {
                 $"┆ [yellow]Filter:[/] {state.FilterText.EscapeMarkup()} [yellow]({state.Filtered.Count} total)[/]    [[Esc]] Clear  [[Q]]uit ┆"));
         } else {
             lines.Add(new Markup(
-                "┆ [green]S[/]tart  s[yellow]T[/]op  [cyan]A[/]uto  [cyan]M[/]anual  [red]D[/]isable  [grey]R[/]efresh  [[/]]Filter  [[F1]]Help  [[Q]]uit ┆"));
+                "┆ [green]S[/]tart  s[yellow]T[/]op  [magenta]R[/]estart  [cyan]A[/]uto  [cyan]M[/]anual  [red]D[/]isable  [grey]F5[/]fresh  [[/]]Filter  [[F1]]Help  [[Q]]uit ┆"));
         }
 
         if (!string.IsNullOrEmpty(state.StatusMessage)) {
@@ -400,7 +409,8 @@ internal static class TuiCommand {
         actions.AddRow("[cyan]A[/]", "Set startup to [cyan]Automatic[/]");
         actions.AddRow("[cyan]M[/]", "Set startup to [cyan]Manual[/]");
         actions.AddRow("[red]D[/]", "Set startup to [red]Disabled[/]");
-        actions.AddRow("[grey]R[/]", "Refresh service list");
+        actions.AddRow("[magenta]R[/]", "Restart selected service");
+        actions.AddRow("[grey]F5[/]", "Refresh service list");
         actions.AddRow("[grey]Q/Esc[/]", "Quit");
 
         var layout = new Grid();
